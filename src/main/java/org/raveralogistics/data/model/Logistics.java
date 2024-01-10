@@ -10,5 +10,4 @@ public class Logistics {
     private boolean isLogin;
     private Booking booking;
     private Shipping shipping;
-    private Account account;
 }

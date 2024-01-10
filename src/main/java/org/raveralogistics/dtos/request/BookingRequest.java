@@ -2,15 +2,16 @@ package org.raveralogistics.dtos.request;
 
 import lombok.Data;
 import org.raveralogistics.data.model.Customer;
-import org.raveralogistics.data.model.User;
+import org.raveralogistics.data.model.Sender;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+
 
 @Data
 public class BookingRequest {
-    private User senderInfo;
+    private Sender senderInfo;
     private Customer receiverInfo;
-    private  boolean isDelivered;
+    private  String userId;
     private String parcelName;
-    private LocalDateTime date;
+    private BigDecimal cost = BigDecimal.ZERO;
 }

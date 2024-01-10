@@ -3,13 +3,14 @@ package org.raveralogistics.data.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
-@AllArgsConstructor
 public class Wallet {
 
     private String cardNumber;
     private String threeDigitNumber;
-    private User userInfo;
-    private Account account;
+    private String userId;
+    private BigDecimal balance = BigDecimal.ZERO;
 
 }

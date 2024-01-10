@@ -14,5 +14,6 @@ public class User {
     private String password;
     private Address homeAddress;
     private  boolean isLoggedIn;
+    private Wallet wallet;
 
 }
