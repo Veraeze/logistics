@@ -215,9 +215,59 @@ class LogisticServiceTest {
         ravera.withdrawMoneyFromWallet(user.getUserId(), BigDecimal.valueOf(1000));
         assertEquals(BigDecimal.valueOf(2000), userRepository.findUserBy(user.getUserId()).getWallet().getBalance());
 
+    }
 
+    @Test
+    void testThatExceptionIsThrown_RegisteredUserCanLogin_DepositMoneyIntoWallet_WithdrawMoneyGreaterThanBalance() {
+
+        RegisterRequest registerRequest = request("vera", "08093280641", "veraeze@gmail.com", "password", address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+        ravera.register(registerRequest);
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setName("vera");
+        loginRequest.setPassword("password");
+        ravera.login(loginRequest);
+        assertTrue(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        User user = ravera.findAccountBelongingTo("vera");
+
+        DepositMoneyRequest depositMoneyRequest = new DepositMoneyRequest();
+        depositMoneyRequest.setUserId(user.getUserId());
+        depositMoneyRequest.setAmount(BigDecimal.valueOf(3000));
+
+        ravera.depositMoneyIntoWallet(depositMoneyRequest);
+        assertEquals(BigDecimal.valueOf(3000), userRepository.findUserBy(user.getUserId()).getWallet().getBalance());
+
+        assertThrows(InsufficientFunds.class, ()->ravera.withdrawMoneyFromWallet(user.getUserId(), BigDecimal.valueOf(5000)));
 
     }
+
+    @Test
+    void testThatExceptionIsThrown_RegisteredUserCanLogin_DepositMoneyIntoWallet_WithdrawAmountLessThan0() {
+
+        RegisterRequest registerRequest = request("vera", "08093280641", "veraeze@gmail.com", "password", address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+        ravera.register(registerRequest);
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setName("vera");
+        loginRequest.setPassword("password");
+        ravera.login(loginRequest);
+        assertTrue(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        User user = ravera.findAccountBelongingTo("vera");
+
+        DepositMoneyRequest depositMoneyRequest = new DepositMoneyRequest();
+        depositMoneyRequest.setUserId(user.getUserId());
+        depositMoneyRequest.setAmount(BigDecimal.valueOf(3000));
+
+        ravera.depositMoneyIntoWallet(depositMoneyRequest);
+        assertEquals(BigDecimal.valueOf(3000), userRepository.findUserBy(user.getUserId()).getWallet().getBalance());
+
+        assertThrows(InvalidAmount.class, ()->ravera.withdrawMoneyFromWallet(user.getUserId(), BigDecimal.valueOf(-2000)));
+
+    }
+
+
 
     @Test
     void testThatUserCanLogInAndBookAService() {
