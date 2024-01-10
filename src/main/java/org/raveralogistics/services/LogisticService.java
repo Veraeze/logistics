@@ -1,7 +1,6 @@
 package org.raveralogistics.services;
 
 import org.raveralogistics.data.model.User;
-import org.raveralogistics.dtos.request.BookingRequest;
 import org.raveralogistics.dtos.request.LoginRequest;
 import org.raveralogistics.dtos.request.LogoutRequest;
 import org.raveralogistics.dtos.request.RegisterRequest;
@@ -15,5 +14,4 @@ public interface LogisticService {
 
     void logout(LogoutRequest loginRequest);
 
-    void bookService(BookingRequest bookingRequest);
 }

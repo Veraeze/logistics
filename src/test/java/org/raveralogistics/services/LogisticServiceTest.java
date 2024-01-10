@@ -225,6 +225,5 @@ UserRepository userRepository;
         bookingRequest.setDate(LocalDateTime.now());
         bookingRequest.setDelivered(false);
 
-        ravera.bookService(bookingRequest);
     }
 }

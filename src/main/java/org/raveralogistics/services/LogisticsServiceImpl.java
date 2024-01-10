@@ -2,7 +2,6 @@ package org.raveralogistics.services;
 
 import org.raveralogistics.data.model.User;
 import org.raveralogistics.data.repository.UserRepository;
-import org.raveralogistics.dtos.request.BookingRequest;
 import org.raveralogistics.dtos.request.LoginRequest;
 import org.raveralogistics.dtos.request.LogoutRequest;
 import org.raveralogistics.dtos.request.RegisterRequest;
@@ -52,10 +51,6 @@ public class LogisticsServiceImpl implements LogisticService{
         userRepository.save(user);
     }
 
-    @Override
-    public void bookService(BookingRequest bookingRequest) {
-
-    }
 
     public boolean validate(String userName){
         User user = userRepository.findUserBy(userName);

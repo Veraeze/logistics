@@ -6,15 +6,14 @@ import org.springframework.data.annotation.Id;
 import java.time.LocalDateTime;
 
 @Data
-@AllArgsConstructor
 public class Booking {
 
     @Id
     private String bookingId;
-    private User senderInfo;
+    private Sender senderInfo;
     private Customer receiverInfo;
-    private  boolean isDelivered;
+    private  boolean isBooked;
     private String parcelName;
-    private LocalDateTime date;
-
+    private LocalDateTime dateTime;
+    private String userId;
 }
