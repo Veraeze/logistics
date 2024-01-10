@@ -2,7 +2,9 @@ package org.raveralogistics.services;
 
 import org.raveralogistics.data.model.User;
 import org.raveralogistics.data.repository.UserRepository;
+import org.raveralogistics.dtos.request.BookingRequest;
 import org.raveralogistics.dtos.request.LoginRequest;
+import org.raveralogistics.dtos.request.LogoutRequest;
 import org.raveralogistics.dtos.request.RegisterRequest;
 import org.raveralogistics.exceptions.AccountDoesNotExist;
 import org.raveralogistics.exceptions.IncorrectDetails;
@@ -38,6 +40,21 @@ public class LogisticsServiceImpl implements LogisticService{
         User user = userRepository.findUserBy(name);
         if (user == null) throw new AccountDoesNotExist("Account with this username does not exist!");
         return user;
+    }
+
+    @Override
+    public void logout(LogoutRequest logoutRequest) {
+        User user = userRepository.findUserBy(logoutRequest.getName());
+        if (!validate(logoutRequest.getName())) throw new AccountDoesNotExist("Account with this username does not exist!");
+        if (!logoutRequest.getName().equals(user.getName())) throw new IncorrectDetails("Invalid username or password");
+        if (!logoutRequest.getPassword().equals(user.getPassword())) throw new IncorrectDetails("Invalid username or password");
+        user.setLoggedIn(false);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void bookService(BookingRequest bookingRequest) {
+
     }
 
     public boolean validate(String userName){
