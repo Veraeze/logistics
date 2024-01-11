@@ -1,9 +1,9 @@
 package org.raveralogistics.services;
 
+import org.raveralogistics.data.model.Booking;
+import org.raveralogistics.data.model.Feedback;
 import org.raveralogistics.data.model.User;
-import org.raveralogistics.dtos.request.DepositMoneyRequest;
-import org.raveralogistics.dtos.request.LoginRequest;
-import org.raveralogistics.dtos.request.RegisterRequest;
+import org.raveralogistics.dtos.request.*;
 
 import java.math.BigDecimal;
 
@@ -19,4 +19,8 @@ public interface LogisticService {
     void depositMoneyIntoWallet(DepositMoneyRequest depositMoneyRequest);
 
     void withdrawMoneyFromWallet(String userId, BigDecimal bigDecimal);
+
+    Booking bookService(BookingRequest bookingRequest);
+
+    Feedback addFeedback(FeedbackRequest feedbackRequest);
 }

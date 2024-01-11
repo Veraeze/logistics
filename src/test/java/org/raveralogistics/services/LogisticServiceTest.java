@@ -2,9 +2,7 @@ package org.raveralogistics.services;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.raveralogistics.data.model.Address;
-import org.raveralogistics.data.model.Customer;
-import org.raveralogistics.data.model.User;
+import org.raveralogistics.data.model.*;
 import org.raveralogistics.data.repository.BookingRepository;
 import org.raveralogistics.data.repository.FeedbackRepository;
 import org.raveralogistics.data.repository.UserRepository;
@@ -12,10 +10,7 @@ import org.raveralogistics.dtos.request.*;
 import org.raveralogistics.exceptions.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -243,7 +238,7 @@ class LogisticServiceTest {
     }
 
     @Test
-    void testThatExceptionIsThrown_RegisteredUserCanLogin_DepositMoneyIntoWallet_WithdrawAmountLessThan0() {
+    void testThatExceptionIsThrown_RegisteredUserCanLogin_DepositMoneyIntoWallet_WithdrawAmountLessThanOne() {
 
         RegisterRequest registerRequest = request("vera", "08093280641", "veraeze@gmail.com", "password", address("alaka", "lekki", "lagos", "Nigeria", "12001"));
         ravera.register(registerRequest);
@@ -263,14 +258,13 @@ class LogisticServiceTest {
         ravera.depositMoneyIntoWallet(depositMoneyRequest);
         assertEquals(BigDecimal.valueOf(3000), userRepository.findUserBy(user.getUserId()).getWallet().getBalance());
 
-        assertThrows(InvalidAmount.class, ()->ravera.withdrawMoneyFromWallet(user.getUserId(), BigDecimal.valueOf(-2000)));
+        assertThrows(InvalidAmount.class, ()->ravera.withdrawMoneyFromWallet(user.getUserId(), BigDecimal.valueOf(0)));
 
     }
 
 
-
     @Test
-    void testThatUserCanLogInAndBookAService() {
+    void testThatRegisteredUserCanLogInAndBookAService() {
 
         RegisterRequest registerRequest = request("vera", "08093280641", "veraeze@gmail.com", "password", address("alaka", "lekki", "lagos", "Nigeria", "12001"));
         ravera.register(registerRequest);
@@ -283,11 +277,280 @@ class LogisticServiceTest {
         ravera.login(loginRequest);
         assertTrue(ravera.findAccountBelongingTo("vera").isLoggedIn());
 
+        Sender sender = new Sender();
+        sender.setName("vera");
+        sender.setPhoneNumber("08093280641");
+        sender.setEmailAddress("veraeze@gmail.com");
+        sender.setHomeAddress(address("alaka", "lekki", "lagos", "Nigeria", "12001"));
 
+        Customer receiver = new Customer();
+        receiver.setName("susan");
+        receiver.setPhoneNumber("0803280625");
+        receiver.setEmail("susan@yahoo.com");
+        receiver.setHomeAddress(address("pentville", "maitama", "abuja", "nigeria", "11002"));
 
+        User user = ravera.findAccountBelongingTo("vera");
 
+        DepositMoneyRequest depositMoneyRequest = new DepositMoneyRequest();
+        depositMoneyRequest.setUserId(user.getUserId());
+        depositMoneyRequest.setAmount(BigDecimal.valueOf(3000));
+        ravera.depositMoneyIntoWallet(depositMoneyRequest);
+
+        BookingRequest bookingRequest = new BookingRequest();
+        bookingRequest.setSenderInfo(sender);
+        bookingRequest.setReceiverInfo(receiver);
+        bookingRequest.setUserId(user.getUserId());
+        bookingRequest.setParcelName("Hair");
+        bookingRequest.setCost(BigDecimal.valueOf(500));
+
+        ravera.bookService(bookingRequest);
+        assertEquals(1, bookingRepository.count());
 
     }
+
+    @Test
+    void testThatRegisteredUserCanLogInAndBookAServiceMoreThanOnce() {
+
+        RegisterRequest registerRequest = request("vera", "08093280641", "veraeze@gmail.com", "password", address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+        ravera.register(registerRequest);
+        assertFalse(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setName("vera");
+        loginRequest.setPassword("password");
+
+        ravera.login(loginRequest);
+        assertTrue(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        Sender sender = new Sender();
+        sender.setName("vera");
+        sender.setPhoneNumber("08093280641");
+        sender.setEmailAddress("veraeze@gmail.com");
+        sender.setHomeAddress(address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+
+        Customer receiver = new Customer();
+        receiver.setName("susan");
+        receiver.setPhoneNumber("0803280625");
+        receiver.setEmail("susan@yahoo.com");
+        receiver.setHomeAddress(address("pentville", "maitama", "abuja", "nigeria", "11002"));
+
+        User user = ravera.findAccountBelongingTo("vera");
+
+        DepositMoneyRequest depositMoneyRequest = new DepositMoneyRequest();
+        depositMoneyRequest.setUserId(user.getUserId());
+        depositMoneyRequest.setAmount(BigDecimal.valueOf(3000));
+        ravera.depositMoneyIntoWallet(depositMoneyRequest);
+
+        BookingRequest bookingRequest = new BookingRequest();
+        bookingRequest.setSenderInfo(sender);
+        bookingRequest.setReceiverInfo(receiver);
+        bookingRequest.setUserId(user.getUserId());
+        bookingRequest.setParcelName("Hair");
+        bookingRequest.setCost(BigDecimal.valueOf(500));
+
+        ravera.bookService(bookingRequest);
+        ravera.bookService(bookingRequest);
+        Booking booking = ravera.bookService(bookingRequest);
+        assertEquals(3, bookingRepository.count());
+        assertTrue(booking.isBooked());
+
+    }
+
+    @Test
+    void testThatExceptionIsThrown_BookAServiceWithoutLogin() {
+
+        RegisterRequest registerRequest = request("vera", "08093280641", "veraeze@gmail.com", "password", address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+        ravera.register(registerRequest);
+        assertFalse(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        Sender sender = new Sender();
+        sender.setName("vera");
+        sender.setPhoneNumber("08093280641");
+        sender.setEmailAddress("veraeze@gmail.com");
+        sender.setHomeAddress(address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+
+        Customer receiver = new Customer();
+        receiver.setName("susan");
+        receiver.setPhoneNumber("0803280625");
+        receiver.setEmail("susan@yahoo.com");
+        receiver.setHomeAddress(address("pentville", "maitama", "abuja", "nigeria", "11002"));
+
+        User user = ravera.findAccountBelongingTo("vera");
+
+        DepositMoneyRequest depositMoneyRequest = new DepositMoneyRequest();
+        depositMoneyRequest.setUserId(user.getUserId());
+        depositMoneyRequest.setAmount(BigDecimal.valueOf(3000));
+        assertThrows(LoginError.class, ()->ravera.depositMoneyIntoWallet(depositMoneyRequest));
+
+        BookingRequest bookingRequest = new BookingRequest();
+        bookingRequest.setSenderInfo(sender);
+        bookingRequest.setReceiverInfo(receiver);
+        bookingRequest.setUserId(user.getUserId());
+        bookingRequest.setParcelName("Hair");
+        bookingRequest.setCost(BigDecimal.valueOf(500));
+
+        assertThrows(LoginError.class, ()-> ravera.bookService(bookingRequest));
+
+    }
+
+    @Test
+    void testThatRegisteredUserCanLogInAndDropAFeedbackAfterServiceRendered() {
+
+        RegisterRequest registerRequest = request("vera", "08093280641", "veraeze@gmail.com", "password", address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+        ravera.register(registerRequest);
+        assertFalse(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setName("vera");
+        loginRequest.setPassword("password");
+
+        ravera.login(loginRequest);
+        assertTrue(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        Sender sender = new Sender();
+        sender.setName("vera");
+        sender.setPhoneNumber("08093280641");
+        sender.setEmailAddress("veraeze@gmail.com");
+        sender.setHomeAddress(address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+
+        Customer receiver = new Customer();
+        receiver.setName("susan");
+        receiver.setPhoneNumber("0803280625");
+        receiver.setEmail("susan@yahoo.com");
+        receiver.setHomeAddress(address("pentville", "maitama", "abuja", "nigeria", "11002"));
+
+        User user = ravera.findAccountBelongingTo("vera");
+
+        DepositMoneyRequest depositMoneyRequest = new DepositMoneyRequest();
+        depositMoneyRequest.setUserId(user.getUserId());
+        depositMoneyRequest.setAmount(BigDecimal.valueOf(3000));
+        ravera.depositMoneyIntoWallet(depositMoneyRequest);
+
+        BookingRequest bookingRequest = new BookingRequest();
+        bookingRequest.setSenderInfo(sender);
+        bookingRequest.setReceiverInfo(receiver);
+        bookingRequest.setUserId(user.getUserId());
+        bookingRequest.setParcelName("Hair");
+        bookingRequest.setCost(BigDecimal.valueOf(500));
+
+        ravera.bookService(bookingRequest);
+        assertEquals(1, bookingRepository.count());
+
+        FeedbackRequest feedbackRequest = new FeedbackRequest();
+        feedbackRequest.setUserId(user.getUserId());
+        feedbackRequest.setBookingId("RVA1");
+        feedbackRequest.setFeedBack("Nice service, order received");
+
+        ravera.addFeedback(feedbackRequest);
+        assertEquals(1,feedbackRepository.count());
+
+    }
+
+    @Test
+    void testThatExceptionIsThrown_RegisteredUserDropsAFeedbackAfterServiceRendered_UsingWrongBookingId() {
+
+        RegisterRequest registerRequest = request("vera", "08093280641", "veraeze@gmail.com", "password", address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+        ravera.register(registerRequest);
+        assertFalse(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setName("vera");
+        loginRequest.setPassword("password");
+
+        ravera.login(loginRequest);
+        assertTrue(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        Sender sender = new Sender();
+        sender.setName("vera");
+        sender.setPhoneNumber("08093280641");
+        sender.setEmailAddress("veraeze@gmail.com");
+        sender.setHomeAddress(address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+
+        Customer receiver = new Customer();
+        receiver.setName("susan");
+        receiver.setPhoneNumber("0803280625");
+        receiver.setEmail("susan@yahoo.com");
+        receiver.setHomeAddress(address("pentville", "maitama", "abuja", "nigeria", "11002"));
+
+        User user = ravera.findAccountBelongingTo("vera");
+
+        DepositMoneyRequest depositMoneyRequest = new DepositMoneyRequest();
+        depositMoneyRequest.setUserId(user.getUserId());
+        depositMoneyRequest.setAmount(BigDecimal.valueOf(3000));
+        ravera.depositMoneyIntoWallet(depositMoneyRequest);
+
+        BookingRequest bookingRequest = new BookingRequest();
+        bookingRequest.setSenderInfo(sender);
+        bookingRequest.setReceiverInfo(receiver);
+        bookingRequest.setUserId(user.getUserId());
+        bookingRequest.setParcelName("Hair");
+        bookingRequest.setCost(BigDecimal.valueOf(500));
+
+        ravera.bookService(bookingRequest);
+        assertEquals(1, bookingRepository.count());
+
+        FeedbackRequest feedbackRequest = new FeedbackRequest();
+        feedbackRequest.setUserId(user.getUserId());
+        feedbackRequest.setBookingId("RVA10t");
+        feedbackRequest.setFeedBack("Nice service, order received");
+
+        assertThrows(BookingNotFound.class, ()->ravera.addFeedback(feedbackRequest));
+
+    }
+
+    @Test
+    void testThatExceptionIsThrown_RegisteredUserDropsAFeedbackAfterServiceRendered_UsingWrongUserId() {
+
+        RegisterRequest registerRequest = request("vera", "08093280641", "veraeze@gmail.com", "password", address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+        ravera.register(registerRequest);
+        assertFalse(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setName("vera");
+        loginRequest.setPassword("password");
+
+        ravera.login(loginRequest);
+        assertTrue(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        Sender sender = new Sender();
+        sender.setName("vera");
+        sender.setPhoneNumber("08093280641");
+        sender.setEmailAddress("veraeze@gmail.com");
+        sender.setHomeAddress(address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+
+        Customer receiver = new Customer();
+        receiver.setName("susan");
+        receiver.setPhoneNumber("0803280625");
+        receiver.setEmail("susan@yahoo.com");
+        receiver.setHomeAddress(address("pentville", "maitama", "abuja", "nigeria", "11002"));
+
+        User user = ravera.findAccountBelongingTo("vera");
+
+        DepositMoneyRequest depositMoneyRequest = new DepositMoneyRequest();
+        depositMoneyRequest.setUserId(user.getUserId());
+        depositMoneyRequest.setAmount(BigDecimal.valueOf(3000));
+        ravera.depositMoneyIntoWallet(depositMoneyRequest);
+
+        BookingRequest bookingRequest = new BookingRequest();
+        bookingRequest.setSenderInfo(sender);
+        bookingRequest.setReceiverInfo(receiver);
+        bookingRequest.setUserId(user.getUserId());
+        bookingRequest.setParcelName("Hair");
+        bookingRequest.setCost(BigDecimal.valueOf(500));
+
+        ravera.bookService(bookingRequest);
+        assertEquals(1, bookingRepository.count());
+
+        FeedbackRequest feedbackRequest = new FeedbackRequest();
+        feedbackRequest.setUserId("ABC2");
+        feedbackRequest.setBookingId("RVA1");
+        feedbackRequest.setFeedBack("Nice service, order received");
+
+        assertThrows(InvalidUserId.class, ()->ravera.addFeedback(feedbackRequest));
+
+    }
+
+
 
     private static Address address(String street, String city, String state, String country, String zipCode){
         Address homeAddress = new Address();

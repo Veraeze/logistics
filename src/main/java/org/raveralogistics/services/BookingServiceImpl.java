@@ -23,13 +23,13 @@ public class BookingServiceImpl implements BookingService{
     @Override
     public Booking book(String bookingId, Sender senderInfo, Customer receiverInfo, String userId, String parcelName, LocalDateTime dateTime) {
         Booking booking = new Booking();
+
         booking.setBookingId(bookingId);
         booking.setSenderInfo(senderInfo);
         booking.setReceiverInfo(receiverInfo);
+        booking.setUserId(userId);
         booking.setParcelName(parcelName);
         booking.setDateTime(dateTime);
-        booking.setUserId(userId);
-
         booking.setBooked(true);
 
         bookingRepository.save(booking);

@@ -1,6 +1,5 @@
 package org.raveralogistics.data.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 

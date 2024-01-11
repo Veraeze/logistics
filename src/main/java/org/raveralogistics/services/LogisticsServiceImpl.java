@@ -1,16 +1,19 @@
 package org.raveralogistics.services;
 
+import org.raveralogistics.data.model.Booking;
+import org.raveralogistics.data.model.Feedback;
 import org.raveralogistics.data.model.User;
 import org.raveralogistics.data.model.Wallet;
+import org.raveralogistics.data.repository.BookingRepository;
+import org.raveralogistics.data.repository.FeedbackRepository;
 import org.raveralogistics.data.repository.UserRepository;
-import org.raveralogistics.dtos.request.DepositMoneyRequest;
-import org.raveralogistics.dtos.request.LoginRequest;
-import org.raveralogistics.dtos.request.RegisterRequest;
+import org.raveralogistics.dtos.request.*;
 import org.raveralogistics.exceptions.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static org.raveralogistics.utils.Mapper.*;
 
@@ -18,6 +21,15 @@ import static org.raveralogistics.utils.Mapper.*;
 public class LogisticsServiceImpl implements LogisticService{
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    BookingServiceImpl bookingService;
+    @Autowired
+    BookingRepository bookingRepository;
+    @Autowired
+    FeedbackServiceImpl feedbackService;
+    @Autowired
+    FeedbackRepository feedbackRepository;
+
     @Override
     public User register(RegisterRequest registerRequest) {
         if (validateUsername(registerRequest.getName())) throw new UserNameNotAvailable(registerRequest.getName() + " already exists!");
@@ -69,8 +81,8 @@ public class LogisticsServiceImpl implements LogisticService{
 
         User user = userRepository.findUserBy(depositMoneyRequest.getUserId());
 
-        if (user == null) throw new AccountDoesNotExist("Account with this username does not exist!");
-        if(!user.isLoggedIn()) throw new LoginError("Login to perform this action");
+            validateUser(user, user.getUserId());
+            validateLogin(user);
 
         Wallet wallet = user.getWallet();
         BigDecimal walletBalance = wallet.getBalance();
@@ -85,8 +97,8 @@ public class LogisticsServiceImpl implements LogisticService{
     public void withdrawMoneyFromWallet(String userId, BigDecimal amount) {
         User user = userRepository.findUserBy(userId);
 
-        if (user == null) throw new AccountDoesNotExist("Account with this username does not exist!");
-        if(!user.isLoggedIn()) throw new LoginError("Login to perform this action");
+        validateUser(user, userId);
+        validateLogin(user);
 
         Wallet wallet = user.getWallet();
         BigDecimal walletBalance = wallet.getBalance();
@@ -98,11 +110,54 @@ public class LogisticsServiceImpl implements LogisticService{
         userRepository.save(user);
     }
 
+    @Override
+    public Booking bookService(BookingRequest bookingRequest) {
+        User user = userRepository.findUserBy(bookingRequest.getUserId());
+
+        validateUser(user, bookingRequest.getUserId());
+        validateLogin(user);
+
+        withdrawMoneyFromWallet(bookingRequest.getUserId(), bookingRequest.getCost());
+
+        return bookingService.book("RVA" + (bookingRepository.count() + 1), bookingRequest.getSenderInfo(),
+                bookingRequest.getReceiverInfo(), bookingRequest.getUserId(),
+                bookingRequest.getParcelName(), LocalDateTime.now()
+        );
+    }
+
+    @Override
+    public Feedback addFeedback(FeedbackRequest feedbackRequest) {
+        User user = userRepository.findUserBy(feedbackRequest.getUserId());
+
+        validateUser(user, feedbackRequest.getUserId());
+        validateLogin(user);
+
+        Booking booking = bookingRepository.findBookingByBookingId(feedbackRequest.getBookingId());
+        if (booking == null) throw new BookingNotFound("This booking ID cannot be found");
+        if (!feedbackRequest.getUserId().equals(user.getUserId())){
+            throw new InvalidUserId("User ID incorrect, try again!");
+        }
+        return feedbackService.feedback("AB" + (feedbackRepository.count()+1),feedbackRequest.getUserId(),
+                feedbackRequest.getBookingId(),feedbackRequest.getFeedBack());
+
+    }
+
     public boolean validateUsername(String userName){
         User user = userRepository.findUserBy(userName);
         return user != null;
     }
 
+    private void validateUser(User user, String userId){
+        if (user == null) {
+            throw new AccountDoesNotExist("Account with this username does not exist!");
+        }
+    }
+
+    private void validateLogin(User user){
+        if (!user.isLoggedIn()) {
+            throw new LoginError("Login to perform this action");
+        }
+    }
     private void validateAmount(BigDecimal amount){
         if (amount.compareTo(BigDecimal.ZERO) <= 0) throw new InvalidAmount("Error!, amount must be greater than 0 \nPlease try again");
     }

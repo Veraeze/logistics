@@ -9,4 +9,5 @@ import java.util.List;
 public interface BookingService {
     Booking book( String bookingId, Sender senderInfo, Customer receiverInfo, String userId, String parcelName, LocalDateTime dateTime);
     List<Booking> findAll();
+
 }
