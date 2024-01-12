@@ -550,7 +550,97 @@ class LogisticServiceTest {
 
     }
 
+    @Test
+    void testThatRegisteredUserCanLoginAndCheckWalletBalance() {
 
+        RegisterRequest registerRequest = request("vera", "08093280641", "veraeze@gmail.com", "password", address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+        ravera.register(registerRequest);
+        assertFalse(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setName("vera");
+        loginRequest.setPassword("password");
+
+        ravera.login(loginRequest);
+        assertTrue(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        Sender sender = new Sender();
+        sender.setName("vera");
+        sender.setPhoneNumber("08093280641");
+        sender.setEmailAddress("veraeze@gmail.com");
+        sender.setHomeAddress(address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+
+        Customer receiver = new Customer();
+        receiver.setName("susan");
+        receiver.setPhoneNumber("0803280625");
+        receiver.setEmail("susan@yahoo.com");
+        receiver.setHomeAddress(address("pentville", "maitama", "abuja", "nigeria", "11002"));
+
+        User user = ravera.findAccountBelongingTo("vera");
+
+        DepositMoneyRequest depositMoneyRequest = new DepositMoneyRequest();
+        depositMoneyRequest.setUserId(user.getUserId());
+        depositMoneyRequest.setAmount(BigDecimal.valueOf(3000));
+        ravera.depositMoneyIntoWallet(depositMoneyRequest);
+
+        BookingRequest bookingRequest = new BookingRequest();
+        bookingRequest.setSenderInfo(sender);
+        bookingRequest.setReceiverInfo(receiver);
+        bookingRequest.setUserId(user.getUserId());
+        bookingRequest.setParcelName("Hair");
+        bookingRequest.setCost(BigDecimal.valueOf(500));
+
+        ravera.bookService(bookingRequest);
+        assertEquals(1, bookingRepository.count());
+
+        assertEquals(BigDecimal.valueOf(2500), ravera.checkWalletBalance(user.getUserId()));
+    }
+
+    @Test
+    void testThatExceptionIsThrown_RegisteredUserTriesToCheckWalletBalanceWithWrongUserId() {
+
+        RegisterRequest registerRequest = request("vera", "08093280641", "veraeze@gmail.com", "password", address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+        ravera.register(registerRequest);
+        assertFalse(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setName("vera");
+        loginRequest.setPassword("password");
+
+        ravera.login(loginRequest);
+        assertTrue(ravera.findAccountBelongingTo("vera").isLoggedIn());
+
+        Sender sender = new Sender();
+        sender.setName("vera");
+        sender.setPhoneNumber("08093280641");
+        sender.setEmailAddress("veraeze@gmail.com");
+        sender.setHomeAddress(address("alaka", "lekki", "lagos", "Nigeria", "12001"));
+
+        Customer receiver = new Customer();
+        receiver.setName("susan");
+        receiver.setPhoneNumber("0803280625");
+        receiver.setEmail("susan@yahoo.com");
+        receiver.setHomeAddress(address("pentville", "maitama", "abuja", "nigeria", "11002"));
+
+        User user = ravera.findAccountBelongingTo("vera");
+
+        DepositMoneyRequest depositMoneyRequest = new DepositMoneyRequest();
+        depositMoneyRequest.setUserId(user.getUserId());
+        depositMoneyRequest.setAmount(BigDecimal.valueOf(3000));
+        ravera.depositMoneyIntoWallet(depositMoneyRequest);
+
+        BookingRequest bookingRequest = new BookingRequest();
+        bookingRequest.setSenderInfo(sender);
+        bookingRequest.setReceiverInfo(receiver);
+        bookingRequest.setUserId(user.getUserId());
+        bookingRequest.setParcelName("Hair");
+        bookingRequest.setCost(BigDecimal.valueOf(500));
+
+        ravera.bookService(bookingRequest);
+        assertEquals(1, bookingRepository.count());
+
+        assertThrows(InvalidUserId.class, ()-> ravera.checkWalletBalance("uyyu"));
+    }
 
     private static Address address(String street, String city, String state, String country, String zipCode){
         Address homeAddress = new Address();

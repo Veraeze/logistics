@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.raveralogistics.utils.Mapper.*;
 
@@ -35,7 +37,7 @@ public class LogisticsServiceImpl implements LogisticService{
         if (validateUsername(registerRequest.getName())) throw new UserNameNotAvailable(registerRequest.getName() + " already exists!");
 
         User user = map(registerRequest.getName(), registerRequest.getPassword(),registerRequest.getPhoneNumber(),
-                registerRequest.getEmail(), registerRequest.getHomeAddress(), String.valueOf(userRepository.count()+1));
+                registerRequest.getEmail(), registerRequest.getHomeAddress(), "URV" + (userRepository.count()+1));
 
         Wallet wallet = new Wallet();
         user.setWallet(wallet);
@@ -140,6 +142,31 @@ public class LogisticsServiceImpl implements LogisticService{
         return feedbackService.feedback("AB" + (feedbackRepository.count()+1),feedbackRequest.getUserId(),
                 feedbackRequest.getBookingId(),feedbackRequest.getFeedBack());
 
+    }
+
+    @Override
+    public BigDecimal checkWalletBalance(String userId) {
+        User user = userRepository.findUserBy(userId);
+
+        validateUser(user, userId);
+        validateLogin(user);
+
+        if (!userId.equals(user.getUserId())){
+            throw new InvalidUserId("User ID incorrect, try again!");
+        }
+        return user.getWallet().getBalance();
+    }
+
+    @Override
+    public Object findListOfBookingOf(String username) {
+        User user = findAccountBelongingTo(username);
+
+        List<Booking> bookingList = new ArrayList<>();
+
+        for (Booking booking: bookingRepository.findAll()){
+            if (booking.getUserId().equals(user.getUserId())) bookingList.add(booking);
+        }
+        return bookingList;
     }
 
     public boolean validateUsername(String userName){
